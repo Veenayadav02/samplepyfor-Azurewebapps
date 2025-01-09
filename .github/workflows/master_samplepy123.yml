@@ -2,7 +2,7 @@
 # More GitHub Actions for Azure: https://github.com/Azure/actions
 # More info on Python, GitHub Actions, and Azure App Service: https://aka.ms/python-webapps-actions
 
-name: Build and deploy Python app to Azure Web App - samplepy123
+name: Build and deploy Python app and WebJob to Azure Web App - samplepy123
 
 on:
   push:
@@ -26,10 +26,10 @@ jobs:
         run: |
           python -m venv venv
           source venv/bin/activate
-      
+
       - name: Install dependencies
         run: pip install -r requirements.txt
-        
+
       # Optional: Add step to run tests here (PyTest, Django test suites, etc.)
 
       - name: Zip artifact for deployment
@@ -49,7 +49,7 @@ jobs:
     environment:
       name: 'Production'
       url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
-    
+
     steps:
       - name: Download artifact from build job
         uses: actions/download-artifact@v4
@@ -59,7 +59,6 @@ jobs:
       - name: Unzip artifact for deployment
         run: unzip release.zip
 
-      
       - name: 'Deploy to Azure Web App'
         uses: azure/webapps-deploy@v3
         id: deploy-to-webapp
@@ -67,3 +66,23 @@ jobs:
           app-name: 'samplepy123'
           slot-name: 'Production'
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_A1F13D48734C4208A6F601CEE795B98D }}
+
+      # Deploy WebJob to Azure Web App (WebJob script path is assumed to be ./webjob/)
+      - name: 'Deploy WebJob to Azure Web App'
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: 'samplepy123'
+          slot-name: 'Production'
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_A1F13D48734C4208A6F601CEE795B98D }}
+          package: './webjob'  # Assuming webjob.py is located in the 'webjob' folder
+
+  # Optional: Monitor WebJob deployment
+  monitor-webjob:
+    runs-on: ubuntu-latest
+    needs: deploy
+    steps:
+      - name: Monitor WebJob status
+        run: |
+          # You can add a command to check the WebJob's status
+          # For example, use Azure CLI to check WebJob status or logs
+          echo "Monitoring WebJob status..."
